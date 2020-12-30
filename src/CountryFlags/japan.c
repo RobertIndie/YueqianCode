@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../../framework/lib.h"
+#include "../../lib/lib.h"
 
 int main()
 {
