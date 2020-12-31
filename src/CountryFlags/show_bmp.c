@@ -7,7 +7,6 @@
 #include "../../lib/lib.h"
 #include <stdlib.h>
 
-
 int lcd_show_color(unsigned int color)
 {
 	int fd_lcd;
@@ -60,7 +59,7 @@ int lcd_show_bmp_xy(int x, int y, int w, int h,char *bmp_name)
 	lseek(fd_bmp, 54, SEEK_SET);
 	
 	//3. read()读取图片的数据
-	read(fd_bmp, bmp_buf, bmp_size);//800*480*3
+	read(fd_bmp, bmp_buf, bmp_size);//w*h*3
 	
 	//4. close()关闭图片文件
 	close(fd_bmp);
@@ -92,25 +91,31 @@ int lcd_show_bmp_xy(int x, int y, int w, int h,char *bmp_name)
     {
         printf("error");
     }
+    for(int i=0;i<800*480;i++){
+        *(fb_base+i)=0x00FFFFFF;
+    }
     int p=0;
-	for(int i=x;i<x+w;i++)
+    for(int j=y;j<y+h;j++)
     { 
-        for(int j=y;j<y+h;j++)
+        for(int i=x;i<x+w;i++)
         { 
-            *(fb_base+j*800+i) = lcd_buf[p++];
+            *(fb_base+j*800+i) = lcd_buf[(h-(j-y)-1)*w+i-x];
         }
     }
+    //printf("Debug %d\n",p);
 
 	//10.解除显存的映射
 	munmap(fb_base, 800*480*4);
 	
 	//11.关闭液晶屏
 	close(fd_lcd);
+    free(bmp_buf);
+    free(lcd_buf);
 	
 	return 0;	
 }
 int main(void)
 {
-   lcd_show_bmp_xy(100, 100, 200, 200, "sp.bmp");
+    lcd_show_bmp_xy(100, 100, 200, 120, "sp.bmp"); // w->h h->w
 	return 0;
 }
