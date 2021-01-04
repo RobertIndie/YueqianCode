@@ -42,6 +42,9 @@ struct Button{
     struct Page* pointToPage;
 };
 
+#define DEBUG_BUTTON(button)\
+    LOG("[DEBUG][Button](%d,%d)(%d,%d)\n",button.rect.lt.x,button.rect.lt.y,button.rect.rd.x,button.rect.rd.y);
+
 struct Page{
     struct BMP* background;
     struct Button* buttons;

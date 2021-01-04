@@ -1,7 +1,7 @@
 #include "../../lib/db.h"
 
 int ReadBMP(char* name, struct BMP** ptrBMP){
-    LOG("Load BMP: %s", name);
+    LOG("Load BMP: %s\n", name);
     struct BMP* result = (struct BMP*)malloc(sizeof(struct BMP));
     result->size = 1;
     result->data = (int*)malloc(sizeof(int)*result->size);
@@ -47,24 +47,35 @@ int CloseLCD(struct LCD** lcd){
     return 0;
 }
 
+char* test_str="15 25";
+
 // 获取触摸屏的触摸位置，将阻塞等待用户输入
 struct Vector GetTorchPos(){
     struct Vector result;
-    result.x = 400;
-    result.y = 240;
+    char* other;
+    int r = sscanf(test_str,"%d %d %s",&result.x,&result.y,other);
+    if(r==-1){
+        exit(0);
+    }
+    test_str=other;
+    LOG("[Touch]Get pos:(%d,%d)\n",result.x,result.y);
     return result;
 }
 
 int Run(struct Controller* controller){
+    LOG("[Controller]Start running ...\n");
     while(1){
-        struct Vector pos = GetTorchPos();
         struct Page* page = controller->currentPage;
+        LOG("[Controller]Current page:%ld\n",page-controller->pagesList);
+        struct Vector pos = GetTorchPos();
         for(int i=0;i<page->buttonsCount;i++){
             struct Button* b = page->buttons + i;
+            DEBUG_BUTTON((*b));
             if(pos.x>=b->rect.lt.x && pos.x <=b->rect.rd.x
-                && pos.y>=b->rect.rd.y && pos.y<=b->rect.lt.y
+                && pos.y>=b->rect.lt.y && pos.y<=b->rect.rd.y
             ){
                 controller->currentPage = b->pointToPage;
+                LOG("[Controller]Point to page %ld\n",controller->currentPage-controller->pagesList);
                 break;
             }
         }
@@ -89,22 +100,42 @@ struct Controller* ConfigLoad(char* configFilePath){
     #define GET_LINE if((read=getline(&line,&len,fp))==-1) {LOG("Error reading config fail.");exit(-1);}
 
     GET_LINE
-    sscanf("%d",&(controller->pagesListSize));
+    sscanf(line,"%d",&(controller->pagesListSize));
+    if(controller->pagesListSize<=0){
+        LOG("[Error]No pages found.\n");
+        exit(-1);
+    }
+    LOG("[Config]pages count: %d\n",controller->pagesListSize);
     controller->pagesList = (struct Page*)malloc(sizeof(struct Page)*controller->pagesListSize);
+    controller->currentPage = controller->pagesList;
     for(int i=0;i<controller->pagesListSize;i++){
         struct Page* page = controller->pagesList+i;
-        sscanf("%d",&(page->buttonsCount));
+        GET_LINE
+        sscanf(line,"%d",&(page->buttonsCount));
+        LOG("[Config][Page %d]buttons count: %d\n",i,page->buttonsCount);
         page->buttons = (struct Button*)malloc(sizeof(struct Button)*page->buttonsCount);
         for(int j=0;j<page->buttonsCount;j++){
             struct Button* button = page->buttons+i;
-            sscanf("%d %d %d %d %d",&(button->rect.lt.x),
+            int pointPageIndex;
+            GET_LINE
+            sscanf(line,"%d %d %d %d %d",&(button->rect.lt.x),
                                     &(button->rect.lt.y),
                                     &(button->rect.rd.x),
-                                    &(button->rect.rd.y));
+                                    &(button->rect.rd.y),
+                                    &pointPageIndex);
+            button->pointToPage = controller->pagesList + pointPageIndex;
+            LOG("[Config][Page %d][Button %d]%d %d %d %d %ld\n",
+                                    i,j,
+                                    (button->rect.lt.x),
+                                    (button->rect.lt.y),
+                                    (button->rect.rd.x),
+                                    (button->rect.rd.y),
+                                    (button->pointToPage - controller->pagesList));
         }
     }
 
     fclose(fp);
     if (line)
         free(line);
+    return controller;
 }
