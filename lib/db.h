@@ -1,0 +1,66 @@
+#ifndef DB
+#define DB
+#define DB_VERSION 1
+
+#include <stdio.h>
+#include <stdlib.h>
+#define LOG printf
+
+#define ResultOK 0
+
+struct Vector{
+    int x;
+    int y;
+};
+
+struct Rectangle{
+    struct Vector lt;
+    struct Vector rd;
+};
+
+struct BMP{
+    int* data;
+    int size;
+};
+
+struct LCD{
+    int fd;
+    int* base;
+    int size;
+};
+
+// 读取bmp文件，将为其分配内存
+int ReadBMP(char* name, struct BMP** ptrBMP);
+// 释放BMP及内存
+int FreeBMP(struct BMP** ptrBMP);
+int InitLCD(struct LCD** lcd);
+int ShowBMP(struct LCD* lcd, struct BMP* bmp);
+int CloseLCD(struct LCD** lcd);
+
+struct Button{
+    struct Rectangle rect;
+    struct Page* pointToPage;
+};
+
+struct Page{
+    struct BMP* background;
+    struct Button* buttons;
+    int buttonsCount;
+};
+
+// 获取触摸屏的触摸位置，将阻塞等待用户输入
+struct Vector GetTorchPos();
+
+struct Controller{
+    struct Page* pagesList;
+    int pagesListSize;
+    struct Page* currentPage;
+};
+
+// 不断地循环检测触摸屏的触摸位置，检查按钮的点击事件，并进行页面跳转
+int Run(struct Controller* controller);
+
+// 读取配置文件，并加载生成Controller
+struct Controller* ConfigLoad(char* configFilePath);
+
+#endif // DB
