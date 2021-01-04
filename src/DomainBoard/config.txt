@@ -1,6 +1,6 @@
 2 // 2 pages
-1 //page 0 has 1 button
+1 main.bmp //page 0 has 1 button
 10 20 30 40 1 // button 0
-2 // page 1 has 2 buttons
+2 test.bmp // page 1 has 2 buttons
 10 20 30 40 0 // button 0 point to page 0
 50 60 70 80 1 // button 1 point to page 1, redirect to itself

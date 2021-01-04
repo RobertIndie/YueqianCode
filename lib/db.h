@@ -46,6 +46,7 @@ struct Button{
     LOG("[DEBUG][Button](%d,%d)(%d,%d)\n",button.rect.lt.x,button.rect.lt.y,button.rect.rd.x,button.rect.rd.y);
 
 struct Page{
+    char bgPath[10]; // debug use
     struct BMP* background;
     struct Button* buttons;
     int buttonsCount;

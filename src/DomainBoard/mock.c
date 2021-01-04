@@ -47,14 +47,14 @@ int CloseLCD(struct LCD** lcd){
     return 0;
 }
 
-char* test_str="15 25";
+char* test_str="15 25 15 25 end";
 
 // 获取触摸屏的触摸位置，将阻塞等待用户输入
 struct Vector GetTorchPos(){
     struct Vector result;
     char* other;
-    int r = sscanf(test_str,"%d %d %s",&result.x,&result.y,other);
-    if(r==-1){
+    int r = sscanf(test_str,"%d %d %[^\n]",&result.x,&result.y,other);
+    if(r<=1){
         exit(0);
     }
     test_str=other;
@@ -67,6 +67,7 @@ int Run(struct Controller* controller){
     while(1){
         struct Page* page = controller->currentPage;
         LOG("[Controller]Current page:%ld\n",page-controller->pagesList);
+        LOG("[Controller]Render %s\n",page->bgPath);
         struct Vector pos = GetTorchPos();
         for(int i=0;i<page->buttonsCount;i++){
             struct Button* b = page->buttons + i;
@@ -111,11 +112,11 @@ struct Controller* ConfigLoad(char* configFilePath){
     for(int i=0;i<controller->pagesListSize;i++){
         struct Page* page = controller->pagesList+i;
         GET_LINE
-        sscanf(line,"%d",&(page->buttonsCount));
-        LOG("[Config][Page %d]buttons count: %d\n",i,page->buttonsCount);
+        sscanf(line,"%d %s",&(page->buttonsCount),page->bgPath);
+        LOG("[Config][Page %d]buttons count: %d | background path: %s\n",i,page->buttonsCount,page->bgPath);
         page->buttons = (struct Button*)malloc(sizeof(struct Button)*page->buttonsCount);
         for(int j=0;j<page->buttonsCount;j++){
-            struct Button* button = page->buttons+i;
+            struct Button* button = page->buttons+j;
             int pointPageIndex;
             GET_LINE
             sscanf(line,"%d %d %d %d %d",&(button->rect.lt.x),
