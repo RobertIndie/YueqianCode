@@ -8,6 +8,23 @@
 
 #define ResultOK 0
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <stdio.h>
+#include <linux/input.h>
+#include <stdlib.h>
+
+int lcd_show_bmp(char *bmp_name);
+
 struct Vector{
     int x;
     int y;

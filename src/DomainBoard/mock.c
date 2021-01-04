@@ -52,12 +52,31 @@ char* test_str="15 25 15 25 end";
 // 获取触摸屏的触摸位置，将阻塞等待用户输入
 struct Vector GetTorchPos(){
     struct Vector result;
-    char* other;
-    int r = sscanf(test_str,"%d %d %[^\n]",&result.x,&result.y,other);
-    if(r<=1){
-        exit(0);
-    }
-    test_str=other;
+    int fd_ts;
+	struct input_event ts_data;
+	//1.打开触摸屏设备文件
+	fd_ts = open("/dev/input/event0", O_RDONLY);
+	if(fd_ts == -1)
+	{
+		perror("open ts error");
+		exit(-1);
+	}
+	
+	//读取触摸屏的数据
+	for(int i=0;i<6;i++)
+	{
+		read(fd_ts, &ts_data, sizeof(struct input_event));
+		if(ts_data.type == EV_ABS)
+		{
+			if(ts_data.code == ABS_X)
+				result.x=ts_data.value;
+			else if(ts_data.code == ABS_Y)
+				result.y=ts_data.value;			
+		}
+	}
+	
+	close(fd_ts);
+
     LOG("[Touch]Get pos:(%d,%d)\n",result.x,result.y);
     return result;
 }
@@ -67,6 +86,7 @@ int Run(struct Controller* controller){
     while(1){
         struct Page* page = controller->currentPage;
         LOG("[Controller]Current page:%ld\n",page-controller->pagesList);
+        lcd_show_bmp(page->bgPath);
         LOG("[Controller]Render %s\n",page->bgPath);
         struct Vector pos = GetTorchPos();
         for(int i=0;i<page->buttonsCount;i++){
