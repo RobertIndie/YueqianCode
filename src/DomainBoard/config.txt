@@ -1,3 +1,4 @@
+1 0 0 // VERSION
 2 // 2 pages
 1 main.bmp //page 0 has 1 button
 10 20 30 40 1 // button 0

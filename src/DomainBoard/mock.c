@@ -88,6 +88,7 @@ struct Controller* ConfigLoad(char* configFilePath){
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
+    int configVersion = 0;
 
     struct Controller* controller = (struct Controller*) malloc(sizeof(struct Controller));
 
@@ -99,6 +100,13 @@ struct Controller* ConfigLoad(char* configFilePath){
     }
 
     #define GET_LINE if((read=getline(&line,&len,fp))==-1) {LOG("Error reading config fail.");exit(-1);}
+
+    // get config file version
+    int versionMajor,versionMinor,versionMaintenace;
+    GET_LINE
+    sscanf(line,"%d %d %d",&versionMajor,&versionMinor,&versionMaintenace);
+    configVersion = (versionMajor << 16) + (versionMinor << 8) + versionMaintenace;
+    LOG("[Config]Config file version:%d.%d.%d|configVersion:%x\n",versionMajor,versionMinor,versionMaintenace,configVersion);
 
     GET_LINE
     sscanf(line,"%d",&(controller->pagesListSize));
