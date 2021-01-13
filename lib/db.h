@@ -60,12 +60,24 @@ enum WorkMode{
     LED // l TODO replace LED with an more abstrctly work mode
 };
 
+struct WorkModeRedirect{
+    struct Page* pointToPage;
+};
+
+struct WorkModeLED{
+    int ledIndex;
+    char ledState;
+};
+
+union WorkModeUnion{
+    struct WorkModeRedirect redirect;
+    struct WorkModeLED led;
+};
+
 struct Button{
     enum WorkMode mode;
     struct Rectangle rect;
-    struct Page* pointToPage;
-    int ledIndex;
-    char ledState;
+    union WorkModeUnion modeParam;
 };
 
 void InitButton(struct Button* button);

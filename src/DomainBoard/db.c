@@ -56,7 +56,7 @@ int CloseLCD(struct LCD **lcd)
 }
 
 void InitButton(struct Button* button){
-    button->ledState = 0;
+
 }
 
 int ButtonEvent(struct Controller *controller, struct Button *button)
@@ -64,14 +64,14 @@ int ButtonEvent(struct Controller *controller, struct Button *button)
     switch (button->mode)
     {
     case Redirect:
-        controller->currentPage = button->pointToPage;
+        controller->currentPage = button->modeParam.redirect.pointToPage;
         LOG("[Controller]Point to page %ld\n", controller->currentPage - controller->pagesList);
         break;
     case LED:
         // LED control
         LOG("LED triggered.\n");
-        button->ledState = !(button->ledState);
-        ctrl_led(button->ledIndex,button->ledState);
+        button->modeParam.led.ledState = !(button->modeParam.led.ledState);
+        ctrl_led(button->modeParam.led.ledIndex,button->modeParam.led.ledState);
         break;
     default:
         // None
@@ -170,24 +170,24 @@ struct Controller *ConfigLoad(char *configFilePath)
             case 'r':
                 button->mode = Redirect;
                 sscanf(paramsBuff, "%d", &pointPageIndex);
+                button->modeParam.redirect.pointToPage = controller->pagesList + pointPageIndex;
                 break;
             case 'l':
                 button->mode = LED;
-                sscanf(paramsBuff, "%d", &button->ledIndex);
+                sscanf(paramsBuff, "%d", &button->modeParam.led.ledIndex);
+                button->modeParam.led.ledState=0;
                 break;
             default:
                 button->mode = None;
                 break;
             }
-            button->pointToPage = controller->pagesList + pointPageIndex;
-            LOG("[Config][Page %d][Button %d](%d %d %d %d) %d %ld\n",
+            LOG("[Config][Page %d][Button %d](%d %d %d %d) %d\n",
                 i, j,
                 (button->rect.lt.x),
                 (button->rect.lt.y),
                 (button->rect.rd.x),
                 (button->rect.rd.y),
-                (button->mode),
-                (button->pointToPage - controller->pagesList));
+                (button->mode));
         }
     }
 
