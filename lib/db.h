@@ -20,7 +20,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <stdio.h>
-#include <linux/input.h>
 #include <stdlib.h>
 
 int lcd_show_bmp(char *bmp_name);
@@ -54,7 +53,14 @@ int InitLCD(struct LCD** lcd);
 int ShowBMP(struct LCD* lcd, struct BMP* bmp);
 int CloseLCD(struct LCD** lcd);
 
+enum WorkMode{
+    None, // n
+    Redirect, // r
+    LED // l TODO replace LED with an more abstrctly work mode
+};
+
 struct Button{
+    enum WorkMode mode;
     struct Rectangle rect;
     struct Page* pointToPage;
 };
