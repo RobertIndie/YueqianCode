@@ -1,13 +1,13 @@
 #include "../lib/db.h"
 #include <string.h>
 
-int check_point = 2;
+int check_point = 3;
 
-char *test_str = "15 25 end";
+char *test_str = "15 25 7 9 end";
 
-void TestError()
+void TestFail()
 {
-    LOG("Test error.\n");
+    LOG("Test failed.\n");
     exit(-1);
 }
 
@@ -30,31 +30,49 @@ struct Vector GetTorchPos()
     return result;
 }
 
-int test_state = 0;
-
 int lcd_show_bmp(char *bmp_name)
 {
+    static int test_state = 0;
     switch (test_state)
     {
     case 0:
         if (strcmp(bmp_name, "main.bmp"))
         {
-            TestError();
+            TestFail();
         }
         break;
     case 1:
         if (strcmp(bmp_name, "test.bmp"))
         {
-            TestError();
+            TestFail();
         }
         break;
 
     default:
-        break;
+        return 0;
     }
     test_state++;
     check_point--;
     return 0;
+}
+
+int ctrl_led(int led, char isOn){
+    static int state = 0;
+    switch (state)
+    {
+    case 0:
+        if(led!=0||isOn!=1){
+            LOG("Test led fail.");
+            TestFail();
+        }
+        break;
+    
+    default:
+        TestFail();
+        break;
+    }
+    state++;
+    check_point--;
 }
 
 int main()

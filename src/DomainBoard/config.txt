@@ -5,4 +5,4 @@
 3 test.bmp // page 1 has 2 buttons
 10 20 30 40 r 0 // button 0 point to page 0
 50 60 70 80 r 1 // button 1 point to page 1, redirect to itself
-5 8 8 10 l // button 2 control led
+5 8 8 10 l 0 // button 2 control led 0

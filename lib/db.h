@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 int lcd_show_bmp(char *bmp_name);
+int ctrl_led(int led, char isOn);
 
 struct Vector{
     int x;
@@ -63,7 +64,11 @@ struct Button{
     enum WorkMode mode;
     struct Rectangle rect;
     struct Page* pointToPage;
+    int ledIndex;
+    char ledState;
 };
+
+void InitButton(struct Button* button);
 
 #define DEBUG_BUTTON(button)\
     LOG("[DEBUG][Button](%d,%d)(%d,%d)\n",button.rect.lt.x,button.rect.lt.y,button.rect.rd.x,button.rect.rd.y);

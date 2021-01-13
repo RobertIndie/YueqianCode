@@ -55,16 +55,23 @@ int CloseLCD(struct LCD **lcd)
     return 0;
 }
 
+void InitButton(struct Button* button){
+    button->ledState = 0;
+}
+
 int ButtonEvent(struct Controller *controller, struct Button *button)
 {
     switch (button->mode)
     {
     case Redirect:
         controller->currentPage = button->pointToPage;
+        LOG("[Controller]Point to page %ld\n", controller->currentPage - controller->pagesList);
         break;
     case LED:
         // LED control
         LOG("LED triggered.\n");
+        button->ledState = !(button->ledState);
+        ctrl_led(button->ledIndex,button->ledState);
         break;
     default:
         // None
@@ -88,8 +95,7 @@ int Run(struct Controller *controller)
             DEBUG_BUTTON((*b));
             if (pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
             {
-                controller->currentPage = b->pointToPage;
-                LOG("[Controller]Point to page %ld\n", controller->currentPage - controller->pagesList);
+                ButtonEvent(controller,b);
                 break;
             }
         }
@@ -147,6 +153,7 @@ struct Controller *ConfigLoad(char *configFilePath)
         for (int j = 0; j < page->buttonsCount; j++)
         {
             struct Button *button = page->buttons + j;
+            InitButton(button);
             int pointPageIndex = 0;
             char workMode;
             char paramsBuff[1024]; // need more information to store comment, it would be great if we can remove this buff.
@@ -166,6 +173,7 @@ struct Controller *ConfigLoad(char *configFilePath)
                 break;
             case 'l':
                 button->mode = LED;
+                sscanf(paramsBuff, "%d", &button->ledIndex);
                 break;
             default:
                 button->mode = None;
