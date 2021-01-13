@@ -93,7 +93,8 @@ void *TouchThread(void *param)
         int ret = GetTorchPos(&result);
         if (ret == -1){
             controller->isStop = 1;
-            pthread_exit(NULL);
+            //sleep(1);
+            //pthread_exit(NULL); // can not exit child thread unti other thread receive the signal.
         }
         pthread_mutex_lock(&controller->touch_mutex);
         controller->touch_thread_pos = result;
@@ -105,14 +106,24 @@ void *TouchThread(void *param)
 void initController(struct Controller *controller)
 {
     controller->isStop = 0;
-    pthread_mutex_init(&controller->touch_mutex, NULL);
-    pthread_cond_init(&controller->touch_cond, NULL);
-    int ret = pthread_create(&controller->touch_thread, NULL, TouchThread, (void *)controller);
-    if (ret != 0)
-    {
-        LOG("Create torch thread error.");
-        exit(-1);
-    }
+    // pthread_mutex_init(&controller->touch_mutex, NULL);
+    // pthread_cond_init(&controller->touch_cond, NULL);
+    // int ret = pthread_create(&controller->touch_thread, NULL, TouchThread, (void *)controller);
+    // if (ret != 0)
+    // {
+    //     LOG("Create torch thread error.");
+    //     exit(-1);
+    // }
+}
+
+uint64_t as_usec(struct timeval* ts) {
+    return ts->tv_sec * (uint64_t)1000000L + ts->tv_usec;
+}
+struct timespec get_time_spec(uint64_t usec){
+    struct timespec ret = {0,0};
+    ret.tv_nsec = (usec % 1000000L)*1000;
+    ret.tv_sec = usec/1000000L;
+    return ret;
 }
 
 int Run(struct Controller *controller)
@@ -122,31 +133,38 @@ int Run(struct Controller *controller)
     while (!controller->isStop)
     {
         struct Page *page = controller->currentPage;
-        LOG("[Controller]Current page:%ld\n", page - controller->pagesList);
+        //LOG("[Controller]Current page:%ld\n", page - controller->pagesList);
         lcd_show_bmp(page->bgPath);
         struct Vector pos;
-        pthread_mutex_lock(&controller->touch_mutex);
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        struct timespec time_to_wait = {0, 0};
-        time_to_wait.tv_nsec = (now.tv_usec+1000*100) * 1000;
-        time_to_wait.tv_sec = now.tv_sec;
-        int ret = pthread_cond_timedwait(&controller->touch_cond, &controller->touch_mutex, &time_to_wait);
-        char isClick = 0;
-        if (ret == ETIMEDOUT)
-            isClick = 0;
-        else{
-            isClick = 1;
-            pos = controller->touch_thread_pos;
+        int ret = GetTorchPos(&pos);
+        if(ret==-1){
+            controller->isStop = 1;
+            break;
         }
+        // pthread_mutex_lock(&controller->touch_mutex);
+        // struct timeval now;
+        // gettimeofday(&now, NULL);
+        // struct timespec time_to_wait = get_time_spec(as_usec(&now)+100*1000);
+        // int ret = pthread_cond_timedwait(&controller->touch_cond, &controller->touch_mutex, &time_to_wait);
+        // char isClick = 0;
+        // if (ret == ETIMEDOUT) // when child thread exit until main thread receive the signal, it will always return ETIMEDOUT.
+        //     isClick = 0;
+        // else{
+        //     if(ret!=0){
+        //         LOG("timed wait fail: %d\n",ret);
+        //         exit(-1);
+        //     }
+        //     isClick = 1;
+        //     pos = controller->touch_thread_pos;
+        // }
         
-        pthread_mutex_unlock(&controller->touch_mutex);
+        // pthread_mutex_unlock(&controller->touch_mutex);
         
         for (int i = 0; i < page->buttonsCount; i++)
         {
             struct Button *b = page->buttons + i;
             //DEBUG_BUTTON((*b));
-            if (isClick && pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
+            if (pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
             {
                 ButtonClickEvent(controller, b);
                 break;
@@ -234,7 +252,10 @@ struct Controller *ConfigLoad(char *configFilePath)
                 button->mode = KeyStatus;
                 sscanf(paramsBuff, "%d", &button->modeParam.key.keyIndex);
                 break;
-
+            case 'c':
+                button->mode = LCD;
+                button->modeParam.lcd.color = 0;
+                break;
             default:
                 button->mode = None;
                 break;

@@ -65,7 +65,8 @@ enum WorkMode
     None,     // n
     Redirect, // r
     LED,      // l
-    KeyStatus // k
+    KeyStatus,// k
+    LCD       // c
 };
 
 struct WorkModeRedirect
@@ -84,11 +85,17 @@ struct WorkModeKeyStatus
     int keyIndex;
 };
 
+struct WorkModeLCD
+{
+    int color;
+};
+
 union WorkModeUnion
 {
     struct WorkModeRedirect redirect;
     struct WorkModeLED led;
     struct WorkModeKeyStatus key;
+    struct WorkModeLCD lcd;
 };
 
 struct Button

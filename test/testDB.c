@@ -15,13 +15,18 @@ void TestFail()
 int GetTorchPos(struct Vector *vector)
 {
     int consumed = 0;
-    usleep(500 * 1000);
     int r = sscanf(test_str, "%d %d%n", &vector->x, &vector->y, &consumed);
     if (r <= 0)
     {
-        if (!check_point)
-            LOG("Test passed.\n");
-        return -1;
+        if (check_point)
+        {
+            LOG("Tests didn't go through all checkpoints.\n");
+            TestFail();
+        }
+        else
+        {
+            return -1;
+        }
     }
     test_str += consumed;
     LOG("[Touch]Get pos:(%d,%d)\n", vector->x, vector->y);
@@ -30,7 +35,7 @@ int GetTorchPos(struct Vector *vector)
 
 int lcd_show_bmp(char *bmp_name)
 {
-    LOG("Render %s.\n", bmp_name);
+    //LOG("Render %s.\n", bmp_name);
     return 0;
 }
 
@@ -40,6 +45,7 @@ int ctrl_led(int led, char isOn)
     switch (state)
     {
     case 0:
+        LOG("LED on.\n");
         if (led != 0 || isOn != 1)
         {
             LOG("Test led fail.");
