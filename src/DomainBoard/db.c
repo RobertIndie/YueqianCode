@@ -151,13 +151,13 @@ struct Controller *ConfigLoad(char *configFilePath)
             char workMode;
             char paramsBuff[1024]; // need more information to store comment, it would be great if we can remove this buff.
             GET_LINE
-            sscanf(line, "%d %d %d %d %c %[^\n]", 
-                    &(button->rect.lt.x),
-                    &(button->rect.lt.y),
-                    &(button->rect.rd.x),
-                    &(button->rect.rd.y),
-                    &workMode,
-                    paramsBuff);
+            sscanf(line, "%d %d %d %d %c %[^\n]",
+                   &(button->rect.lt.x),
+                   &(button->rect.lt.y),
+                   &(button->rect.rd.x),
+                   &(button->rect.rd.y),
+                   &workMode,
+                   paramsBuff);
             switch (workMode)
             {
             case 'r':
