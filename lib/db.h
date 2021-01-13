@@ -82,6 +82,7 @@ struct WorkModeLED
 
 struct WorkModeKeyStatus
 {
+    char isStop;
     pthread_t thread;
 };
 

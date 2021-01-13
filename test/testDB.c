@@ -3,7 +3,7 @@
 
 int check_point = 2;
 
-char *test_str = "15 25 7 9 end";
+char *test_str = "15 25 7 9 15 25 end";
 
 void TestFail()
 {
@@ -31,7 +31,7 @@ int get_key(char *keyStatus){
     static char flag = 0;
     if(flag==1){
         keyStatus[0]=1;
-        sleep(1000);
+        usleep(1000*100);
         return 0;
     }
     flag = 1;

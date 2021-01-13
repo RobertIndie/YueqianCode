@@ -65,7 +65,8 @@ void InitButton(struct Button *button)
 
 void *keyStatusThread(void *param)
 {
-    while (1)
+    struct Button* b = (struct Button*)param;
+    while (!b->modeParam.key.isStop)
     {
         char keyBuff[4];
         get_key(keyBuff);
@@ -81,7 +82,7 @@ int ButtonInitEvent(struct Controller *controller, struct Button *button)
     switch (button->mode)
     {
     case KeyStatus:
-        pthread_create(&button->modeParam.key.thread, NULL, keyStatusThread, NULL);
+        pthread_create(&button->modeParam.key.thread, NULL, keyStatusThread, button);
         break;
     default:
 
@@ -95,7 +96,7 @@ int ButtonExitEvent(struct Controller *controller, struct Button *button)
     switch (button->mode)
     {
     case KeyStatus:
-        pthread_kill(&button->modeParam.key.thread, 0);
+        button->modeParam.key.isStop=1;
         break;
     default:
         break;
@@ -314,6 +315,7 @@ struct Controller *ConfigLoad(char *configFilePath)
                 break;
             case 'k':
                 button->mode = KeyStatus;
+                button->modeParam.key.isStop = 0;
                 break;
             case 'c':
                 button->mode = LCD;
