@@ -1,4 +1,4 @@
-#include "../../lib/db.h"
+#include "../lib/db.h"
 
 char *test_str = "15 25 15 25 end";
 
@@ -6,13 +6,13 @@ char *test_str = "15 25 15 25 end";
 struct Vector GetTorchPos()
 {
     struct Vector result;
-    char other[32];
-    int r = sscanf(test_str, "%d %d %[^\n]", &result.x, &result.y, other);
-    if (r <= 1)
+    int consumed = 0;
+    int r = sscanf(test_str, "%d %d%n", &result.x, &result.y, &consumed);
+    if (r <= 0)
     {
         exit(0);
     }
-    test_str = other;
+    test_str+=consumed;
     LOG("[Touch]Get pos:(%d,%d)\n", result.x, result.y);
     return result;
 }

@@ -55,23 +55,6 @@ int CloseLCD(struct LCD **lcd)
     return 0;
 }
 
-char *test_str = "15 25 15 25 end";
-
-// 获取触摸屏的触摸位置，将阻塞等待用户输入
-struct Vector GetTorchPos()
-{
-    struct Vector result;
-    char other[32];
-    int r = sscanf(test_str, "%d %d %[^\n]", &result.x, &result.y, other);
-    if (r <= 1)
-    {
-        exit(0);
-    }
-    test_str = other;
-    LOG("[Touch]Get pos:(%d,%d)\n", result.x, result.y);
-    return result;
-}
-
 int ButtonEvent(struct Controller *controller, struct Button *button)
 {
     switch (button->mode)
@@ -97,7 +80,7 @@ int Run(struct Controller *controller)
     {
         struct Page *page = controller->currentPage;
         LOG("[Controller]Current page:%ld\n", page - controller->pagesList);
-        LOG("[Controller]Render %s\n", page->bgPath);
+        lcd_show_bmp(page->bgPath);
         struct Vector pos = GetTorchPos();
         for (int i = 0; i < page->buttonsCount; i++)
         {
