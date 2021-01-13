@@ -1,6 +1,8 @@
 #include "../../lib/db.h"
 #include <pthread.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/time.h>
 
 int ReadBMP(char *name, struct BMP **ptrBMP)
 {
@@ -61,7 +63,7 @@ void InitButton(struct Button *button)
 {
 }
 
-int ButtonEvent(struct Controller *controller, struct Button *button)
+int ButtonClickEvent(struct Controller *controller, struct Button *button)
 {
     switch (button->mode)
     {
@@ -87,10 +89,14 @@ void *TouchThread(void *param)
     struct Controller *controller = (struct Controller *)param;
     while (1)
     {
-        pthread_mutex_lock(&controller->touch_mutex);
-        int ret = GetTorchPos(&controller->touch_thread_pos);
-        if (ret == -1)
+        struct Vector result;
+        int ret = GetTorchPos(&result);
+        if (ret == -1){
             controller->isStop = 1;
+            pthread_exit(NULL);
+        }
+        pthread_mutex_lock(&controller->touch_mutex);
+        controller->touch_thread_pos = result;
         pthread_cond_signal(&controller->touch_cond);
         pthread_mutex_unlock(&controller->touch_mutex);
     }
@@ -118,19 +124,31 @@ int Run(struct Controller *controller)
         struct Page *page = controller->currentPage;
         LOG("[Controller]Current page:%ld\n", page - controller->pagesList);
         lcd_show_bmp(page->bgPath);
+        struct Vector pos;
         pthread_mutex_lock(&controller->touch_mutex);
+        struct timeval now;
+        gettimeofday(&now, NULL);
         struct timespec time_to_wait = {0, 0};
-        time_to_wait.tv_nsec = 1000 * 1000;
-        pthread_cond_timedwait_relative_np(&controller->touch_cond, &controller->touch_mutex, &time_to_wait);
+        time_to_wait.tv_nsec = (now.tv_usec+1000*100) * 1000;
+        time_to_wait.tv_sec = now.tv_sec;
+        int ret = pthread_cond_timedwait(&controller->touch_cond, &controller->touch_mutex, &time_to_wait);
+        char isClick = 0;
+        if (ret == ETIMEDOUT)
+            isClick = 0;
+        else{
+            isClick = 1;
+            pos = controller->touch_thread_pos;
+        }
+        
         pthread_mutex_unlock(&controller->touch_mutex);
-        struct Vector pos = controller->touch_thread_pos;
+        
         for (int i = 0; i < page->buttonsCount; i++)
         {
             struct Button *b = page->buttons + i;
-            DEBUG_BUTTON((*b));
-            if (pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
+            //DEBUG_BUTTON((*b));
+            if (isClick && pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
             {
-                ButtonEvent(controller, b);
+                ButtonClickEvent(controller, b);
                 break;
             }
         }
@@ -212,6 +230,11 @@ struct Controller *ConfigLoad(char *configFilePath)
                 sscanf(paramsBuff, "%d", &button->modeParam.led.ledIndex);
                 button->modeParam.led.ledState = 0;
                 break;
+            case 'k':
+                button->mode = KeyStatus;
+                sscanf(paramsBuff, "%d", &button->modeParam.key.keyIndex);
+                break;
+
             default:
                 button->mode = None;
                 break;

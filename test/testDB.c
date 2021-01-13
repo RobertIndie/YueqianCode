@@ -15,6 +15,7 @@ void TestFail()
 int GetTorchPos(struct Vector *vector)
 {
     int consumed = 0;
+    usleep(500 * 1000);
     int r = sscanf(test_str, "%d %d%n", &vector->x, &vector->y, &consumed);
     if (r <= 0)
     {
@@ -29,7 +30,7 @@ int GetTorchPos(struct Vector *vector)
 
 int lcd_show_bmp(char *bmp_name)
 {
-    LOG("Render %s\n.", bmp_name);
+    LOG("Render %s.\n", bmp_name);
     return 0;
 }
 
