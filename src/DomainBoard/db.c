@@ -1,4 +1,6 @@
 #include "../../lib/db.h"
+#include <pthread.h>
+#include <time.h>
 
 int ReadBMP(char *name, struct BMP **ptrBMP)
 {
@@ -80,15 +82,44 @@ int ButtonEvent(struct Controller *controller, struct Button *button)
     return 0;
 }
 
+void* TouchThread(void* param){
+    struct Controller* controller = (struct Controller*)param;
+    while(1){
+        pthread_mutex_lock(&controller->touch_mutex);
+        int ret = GetTorchPos(&controller->touch_thread_pos);
+        if(ret==-1)controller->isStop=1;
+        pthread_cond_signal(&controller->touch_cond);
+        pthread_mutex_unlock(&controller->touch_mutex);
+    }
+}
+
+void initController(struct Controller *controller){
+    controller->isStop=0;
+    pthread_mutex_init(&controller->touch_mutex,NULL);
+    pthread_cond_init(&controller->touch_cond,NULL);
+    int ret = pthread_create(&controller->touch_thread,NULL,TouchThread,(void*)controller);
+    if(ret!=0){
+        LOG("Create torch thread error.");
+        exit(-1);
+    }
+    
+}
+
 int Run(struct Controller *controller)
 {
+    initController(controller);
     LOG("[Controller]Start running ...\n");
-    while (1)
+    while (!controller->isStop)
     {
         struct Page *page = controller->currentPage;
         LOG("[Controller]Current page:%ld\n", page - controller->pagesList);
         lcd_show_bmp(page->bgPath);
-        struct Vector pos = GetTorchPos();
+        pthread_mutex_lock(&controller->touch_mutex);
+        struct timespec time_to_wait = {0, 0};
+        time_to_wait.tv_nsec = 1000*1000;
+        pthread_cond_timedwait_relative_np(&controller->touch_cond,&controller->touch_mutex,&time_to_wait);
+        pthread_mutex_unlock(&controller->touch_mutex);
+        struct Vector pos = controller->touch_thread_pos;
         for (int i = 0; i < page->buttonsCount; i++)
         {
             struct Button *b = page->buttons + i;

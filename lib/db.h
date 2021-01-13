@@ -93,12 +93,18 @@ struct Page{
 };
 
 // 获取触摸屏的触摸位置，将阻塞等待用户输入
-struct Vector GetTorchPos();
+int GetTorchPos(struct Vector *vector);
 
 struct Controller{
     struct Page* pagesList;
     int pagesListSize;
     struct Page* currentPage;
+
+    char isStop;
+    pthread_t touch_thread;
+    pthread_mutex_t touch_mutex;
+    pthread_cond_t touch_cond;
+    struct Vector touch_thread_pos;
 };
 
 // 不断地循环检测触摸屏的触摸位置，检查按钮的点击事件，并进行页面跳转

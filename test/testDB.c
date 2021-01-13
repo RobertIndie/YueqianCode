@@ -1,7 +1,7 @@
 #include "../lib/db.h"
 #include <string.h>
 
-int check_point = 3;
+int check_point = 1;
 
 char *test_str = "15 25 7 9 end";
 
@@ -12,47 +12,24 @@ void TestFail()
 }
 
 // block to read user torch pos
-struct Vector GetTorchPos()
+int GetTorchPos(struct Vector* vector)
 {
-    struct Vector result;
     int consumed = 0;
-    int r = sscanf(test_str, "%d %d%n", &result.x, &result.y, &consumed);
+    int r = sscanf(test_str, "%d %d%n", &vector->x, &vector->y, &consumed);
     if (r <= 0)
     {
         if(!check_point)
             LOG("Test passed.\n");
-        else
-            LOG("Test didn't go through all checkpoints.\n");
-        exit(0);
+        return -1;
     }
     test_str += consumed;
-    LOG("[Touch]Get pos:(%d,%d)\n", result.x, result.y);
-    return result;
+    LOG("[Touch]Get pos:(%d,%d)\n", vector->x, vector->y);
+    return 0;
 }
 
 int lcd_show_bmp(char *bmp_name)
 {
-    static int test_state = 0;
-    switch (test_state)
-    {
-    case 0:
-        if (strcmp(bmp_name, "main.bmp"))
-        {
-            TestFail();
-        }
-        break;
-    case 1:
-        if (strcmp(bmp_name, "test.bmp"))
-        {
-            TestFail();
-        }
-        break;
-
-    default:
-        return 0;
-    }
-    test_state++;
-    check_point--;
+    LOG("Render %s\n.",bmp_name);
     return 0;
 }
 
