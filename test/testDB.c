@@ -1,7 +1,7 @@
 #include "../lib/db.h"
 #include <string.h>
 
-int check_point = 1;
+int check_point = 2;
 
 char *test_str = "15 25 7 9 end";
 
@@ -15,21 +15,27 @@ void TestFail()
 int GetTorchPos(struct Vector *vector)
 {
     int consumed = 0;
+    sleep(1);
     int r = sscanf(test_str, "%d %d%n", &vector->x, &vector->y, &consumed);
     if (r <= 0)
     {
-        if (check_point)
-        {
-            LOG("Tests didn't go through all checkpoints.\n");
-            TestFail();
-        }
-        else
-        {
-            return -1;
-        }
+       sleep(1000);
     }
     test_str += consumed;
     LOG("[Touch]Get pos:(%d,%d)\n", vector->x, vector->y);
+    return 0;
+}
+
+int get_key(char *keyStatus){
+    for(int i=0;i<4;i++)keyStatus[i]=1;
+    static char flag = 0;
+    if(flag==1){
+        keyStatus[0]=1;
+        sleep(1000);
+        return 0;
+    }
+    flag = 1;
+    keyStatus[0]=0;
     return 0;
 }
 
@@ -41,24 +47,7 @@ int lcd_show_bmp(char *bmp_name)
 
 int ctrl_led(int led, char isOn)
 {
-    static int state = 0;
-    switch (state)
-    {
-    case 0:
-        LOG("LED on.\n");
-        if (led != 0 || isOn != 1)
-        {
-            LOG("Test led fail.");
-            TestFail();
-        }
-        break;
-
-    default:
-        TestFail();
-        break;
-    }
-    state++;
-    check_point--;
+    LOG("LED %d status: %d\n",led,isOn);
 }
 
 int main()

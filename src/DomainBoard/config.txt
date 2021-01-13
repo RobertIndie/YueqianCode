@@ -2,7 +2,8 @@
 2 // 2 pages
 1 main.bmp //page 0 has 1 button
 10 20 30 40 r 1 // button 0 work mode is redirect
-3 test.bmp // page 1 has 2 buttons
+4 test.bmp // page 1 has 2 buttons
 10 20 30 40 r 0 // button 0 point to page 0
 50 60 70 80 r 1 // button 1 point to page 1, redirect to itself
 5 8 8 10 l 0 // button 2 control led 0
+0 0 0 0 k // key status checker to let led on.

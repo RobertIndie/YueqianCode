@@ -82,7 +82,7 @@ struct WorkModeLED
 
 struct WorkModeKeyStatus
 {
-    int keyIndex;
+    pthread_t thread;
 };
 
 struct WorkModeLCD
@@ -128,6 +128,7 @@ struct Controller
     struct Page *currentPage;
 
     char isStop;
+    pthread_mutex_t lock;
     pthread_t touch_thread;
     pthread_mutex_t touch_mutex;
     pthread_cond_t touch_cond;
