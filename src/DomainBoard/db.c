@@ -57,8 +57,8 @@ int CloseLCD(struct LCD **lcd)
     return 0;
 }
 
-void InitButton(struct Button* button){
-
+void InitButton(struct Button *button)
+{
 }
 
 int ButtonEvent(struct Controller *controller, struct Button *button)
@@ -73,7 +73,7 @@ int ButtonEvent(struct Controller *controller, struct Button *button)
         // LED control
         LOG("LED triggered.\n");
         button->modeParam.led.ledState = !(button->modeParam.led.ledState);
-        ctrl_led(button->modeParam.led.ledIndex,button->modeParam.led.ledState);
+        ctrl_led(button->modeParam.led.ledIndex, button->modeParam.led.ledState);
         break;
     default:
         // None
@@ -82,27 +82,31 @@ int ButtonEvent(struct Controller *controller, struct Button *button)
     return 0;
 }
 
-void* TouchThread(void* param){
-    struct Controller* controller = (struct Controller*)param;
-    while(1){
+void *TouchThread(void *param)
+{
+    struct Controller *controller = (struct Controller *)param;
+    while (1)
+    {
         pthread_mutex_lock(&controller->touch_mutex);
         int ret = GetTorchPos(&controller->touch_thread_pos);
-        if(ret==-1)controller->isStop=1;
+        if (ret == -1)
+            controller->isStop = 1;
         pthread_cond_signal(&controller->touch_cond);
         pthread_mutex_unlock(&controller->touch_mutex);
     }
 }
 
-void initController(struct Controller *controller){
-    controller->isStop=0;
-    pthread_mutex_init(&controller->touch_mutex,NULL);
-    pthread_cond_init(&controller->touch_cond,NULL);
-    int ret = pthread_create(&controller->touch_thread,NULL,TouchThread,(void*)controller);
-    if(ret!=0){
+void initController(struct Controller *controller)
+{
+    controller->isStop = 0;
+    pthread_mutex_init(&controller->touch_mutex, NULL);
+    pthread_cond_init(&controller->touch_cond, NULL);
+    int ret = pthread_create(&controller->touch_thread, NULL, TouchThread, (void *)controller);
+    if (ret != 0)
+    {
         LOG("Create torch thread error.");
         exit(-1);
     }
-    
 }
 
 int Run(struct Controller *controller)
@@ -116,8 +120,8 @@ int Run(struct Controller *controller)
         lcd_show_bmp(page->bgPath);
         pthread_mutex_lock(&controller->touch_mutex);
         struct timespec time_to_wait = {0, 0};
-        time_to_wait.tv_nsec = 1000*1000;
-        pthread_cond_timedwait_relative_np(&controller->touch_cond,&controller->touch_mutex,&time_to_wait);
+        time_to_wait.tv_nsec = 1000 * 1000;
+        pthread_cond_timedwait_relative_np(&controller->touch_cond, &controller->touch_mutex, &time_to_wait);
         pthread_mutex_unlock(&controller->touch_mutex);
         struct Vector pos = controller->touch_thread_pos;
         for (int i = 0; i < page->buttonsCount; i++)
@@ -126,7 +130,7 @@ int Run(struct Controller *controller)
             DEBUG_BUTTON((*b));
             if (pos.x >= b->rect.lt.x && pos.x <= b->rect.rd.x && pos.y >= b->rect.lt.y && pos.y <= b->rect.rd.y)
             {
-                ButtonEvent(controller,b);
+                ButtonEvent(controller, b);
                 break;
             }
         }
@@ -206,7 +210,7 @@ struct Controller *ConfigLoad(char *configFilePath)
             case 'l':
                 button->mode = LED;
                 sscanf(paramsBuff, "%d", &button->modeParam.led.ledIndex);
-                button->modeParam.led.ledState=0;
+                button->modeParam.led.ledState = 0;
                 break;
             default:
                 button->mode = None;

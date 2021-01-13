@@ -12,13 +12,13 @@ void TestFail()
 }
 
 // block to read user torch pos
-int GetTorchPos(struct Vector* vector)
+int GetTorchPos(struct Vector *vector)
 {
     int consumed = 0;
     int r = sscanf(test_str, "%d %d%n", &vector->x, &vector->y, &consumed);
     if (r <= 0)
     {
-        if(!check_point)
+        if (!check_point)
             LOG("Test passed.\n");
         return -1;
     }
@@ -29,21 +29,23 @@ int GetTorchPos(struct Vector* vector)
 
 int lcd_show_bmp(char *bmp_name)
 {
-    LOG("Render %s\n.",bmp_name);
+    LOG("Render %s\n.", bmp_name);
     return 0;
 }
 
-int ctrl_led(int led, char isOn){
+int ctrl_led(int led, char isOn)
+{
     static int state = 0;
     switch (state)
     {
     case 0:
-        if(led!=0||isOn!=1){
+        if (led != 0 || isOn != 1)
+        {
             LOG("Test led fail.");
             TestFail();
         }
         break;
-    
+
     default:
         TestFail();
         break;
