@@ -1,5 +1,5 @@
 1 1 0 // VERSION
-4 // 3 pages
+5 // 3 pages
 1 main.bmp //page 0 has 1 button
 10 20 30 40 r 1 // button 0 work mode is redirect
 4 test.bmp // page 1 has 2 buttons
@@ -16,3 +16,6 @@
 sample1.bmp
 sample2.bmp
 sample3.bmp
+2 beep.bmp
+10 20 30 40 r 0
+50 60 70 80 b

@@ -27,6 +27,11 @@ int ctrl_led(int led, char isOn);
 // get 4 keys status
 int get_key(char *keyStatus);
 int lcd_test();
+int beep_ctrl(char isOn);
+int music_play();
+int music_stop();
+int music_cont();
+int music_kill();
 
 struct Vector
 {
@@ -68,7 +73,10 @@ enum WorkMode
     LED,      // l
     KeyStatus,// k
     LCD,      // c
-    Album     // a
+    Album,    // a
+    Beep,     // b
+    MusicPlay,// p
+    MusicStop // s
 };
 
 struct WorkModeRedirect
@@ -101,6 +109,18 @@ struct WorkModeAlbum
     pthread_t thread;
 };
 
+struct WorkModeBeep
+{
+    int state;
+};
+
+enum MusicMode
+{
+    NoMusic,
+    Playing,
+    Stoping
+};
+
 union WorkModeUnion
 {
     struct WorkModeRedirect redirect;
@@ -108,6 +128,7 @@ union WorkModeUnion
     struct WorkModeKeyStatus key;
     struct WorkModeLCD lcd;
     struct WorkModeAlbum album;
+    struct WorkModeBeep beep;
 };
 
 struct Button

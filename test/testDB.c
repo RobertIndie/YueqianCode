@@ -5,6 +5,11 @@ int check_point = 2;
 
 char *test_str = "15 25 7 9 15 25 end";
 
+int music_play(){return 0;}
+int music_stop(){return 0;}
+int music_cont(){return 0;}
+int music_kill(){return 0;}
+
 void TestFail()
 {
     LOG("Test failed.\n");
@@ -59,6 +64,11 @@ int lcd_test(){
         LOG("Show pic 3.\n");
         sleep(3);
     }
+}
+
+int beep_ctrl(char isOn)
+{
+    return 0;
 }
 
 int main()

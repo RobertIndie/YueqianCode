@@ -65,28 +65,55 @@ void InitButton(struct Button *button)
 
 void *keyStatusThread(void *param)
 {
-    struct Button* b = (struct Button*)param;
+    struct Button *b = (struct Button *)param;
     while (!b->modeParam.key.isStop)
     {
         char keyBuff[4];
         get_key(keyBuff);
         for (int i = 0; i < sizeof(keyBuff); i++)
         {
-            ctrl_led(i, !keyBuff);
+            ctrl_led(i, !keyBuff[i]);
         }
     }
+    return NULL;
 }
 
-void *LCDThread(void *param){
+void *LCDThread(void *param)
+{
     lcd_test();
+    return NULL;
 }
 
-void *AlbumThread(void *param){
-    struct Button* b = (struct Button*)param;
-    while(1){
+void *AlbumThread(void *param)
+{
+    struct Button *b = (struct Button *)param;
+    while (1)
+    {
         lcd_show_bmp(b->modeParam.album.photoName[b->modeParam.album.currentPhoto]);
-        b->modeParam.album.currentPhoto = (b->modeParam.album.currentPhoto + 1)%b->modeParam.album.size;
+        b->modeParam.album.currentPhoto = (b->modeParam.album.currentPhoto + 1) % b->modeParam.album.size;
     }
+}
+
+void *MusicThread(void *param)
+{
+    int *i = (int *)param;
+    switch (*i)
+    {
+    case 0:
+        music_play();
+        break;
+    case 1:
+        music_stop();
+        break;
+    case 2:
+        music_cont();
+        break;
+    case 3:
+        music_kill();
+        break;
+    }
+    free(i);
+    return NULL;
 }
 
 int ButtonInitEvent(struct Controller *controller, struct Button *button)
@@ -97,10 +124,10 @@ int ButtonInitEvent(struct Controller *controller, struct Button *button)
         pthread_create(&button->modeParam.key.thread, NULL, keyStatusThread, button);
         break;
     case LCD:
-        pthread_create(&button->modeParam.lcd.thread, NULL ,LCDThread, button);
+        pthread_create(&button->modeParam.lcd.thread, NULL, LCDThread, button);
         break;
     case Album:
-        pthread_create(&button->modeParam.album.thread,NULL,AlbumThread,button);
+        pthread_create(&button->modeParam.album.thread, NULL, AlbumThread, button);
         break;
     default:
 
@@ -109,19 +136,21 @@ int ButtonInitEvent(struct Controller *controller, struct Button *button)
     return 0;
 }
 
+enum MusicMode music_mode = NoMusic;
+
 int ButtonExitEvent(struct Controller *controller, struct Button *button)
 {
     switch (button->mode)
     {
     case KeyStatus:
-        button->modeParam.key.isStop=1;
-        pthread_join(&button->modeParam.key.thread, NULL);
+        button->modeParam.key.isStop = 1;
+        pthread_join(button->modeParam.key.thread, NULL);
         break;
     case LCD:
-        pthread_cancel(&button->modeParam.lcd.thread);
+        pthread_cancel(button->modeParam.lcd.thread);
         break;
     case Album:
-        pthread_cancel(&button->modeParam.album.thread);
+        pthread_cancel(button->modeParam.album.thread);
         break;
     default:
         break;
@@ -136,6 +165,7 @@ int InitPage(struct Controller *controller, struct Page *page)
         struct Button *b = page->buttons + i;
         ButtonInitEvent(controller, b);
     }
+    return 0;
 }
 
 int ExitPage(struct Controller *controller, struct Page *page)
@@ -145,10 +175,13 @@ int ExitPage(struct Controller *controller, struct Page *page)
         struct Button *b = page->buttons + i;
         ButtonExitEvent(controller, b);
     }
+    return 0;
 }
 
 int ButtonClickEvent(struct Controller *controller, struct Button *button)
 {
+    pthread_t hang_thread;
+    int *i;
     switch (button->mode)
     {
     case Redirect:
@@ -162,6 +195,39 @@ int ButtonClickEvent(struct Controller *controller, struct Button *button)
         LOG("LED triggered.\n");
         button->modeParam.led.ledState = !(button->modeParam.led.ledState);
         ctrl_led(button->modeParam.led.ledIndex, button->modeParam.led.ledState);
+        break;
+    case Beep:
+        button->modeParam.beep.state = !(button->modeParam.beep.state);
+        beep_ctrl(button->modeParam.beep.state);
+        break;
+    case MusicPlay:
+        i = (int *)malloc(sizeof(int));
+        switch (music_mode)
+        {
+        case NoMusic:
+            *i = 0;
+            music_mode = Playing;
+            pthread_create(&hang_thread, NULL, MusicThread, i);
+            break;
+        case Playing:
+            *i = 1;
+            music_mode = Stoping;
+            pthread_create(&hang_thread, NULL, MusicThread, i);
+            break;
+        case Stoping:
+            *i = 2;
+            music_mode = Playing;
+            pthread_create(&hang_thread, NULL, MusicThread, i);
+            break;
+        default:
+            free(i);
+            break;
+        }
+        break;
+    case MusicStop:
+        i = (int *)malloc(sizeof(int));
+        *i = 3;
+        pthread_create(&hang_thread, NULL, MusicThread, i);
         break;
     default:
         // None
@@ -193,7 +259,7 @@ void *TouchThread(void *param)
 void initController(struct Controller *controller)
 {
     controller->isStop = 0;
-    pthread_mutex_init(&controller->lock,NULL);
+    pthread_mutex_init(&controller->lock, NULL);
     // pthread_mutex_init(&controller->touch_mutex, NULL);
     // pthread_cond_init(&controller->touch_cond, NULL);
     // int ret = pthread_create(&controller->touch_thread, NULL, TouchThread, (void *)controller);
@@ -261,6 +327,7 @@ int Run(struct Controller *controller)
             }
         }
     }
+    return 0;
 }
 
 struct Controller *ConfigLoad(char *configFilePath)
@@ -349,10 +416,24 @@ struct Controller *ConfigLoad(char *configFilePath)
                 button->mode = Album;
                 sscanf(paramsBuff, "%d", &button->modeParam.album.size);
                 button->modeParam.album.currentPhoto = 0;
-                for(int i=0;i<button->modeParam.album.size;i++){
+                for (int i = 0; i < button->modeParam.album.size; i++)
+                {
                     GET_LINE;
-                    sscanf(line, "%s %[^\n]", button->modeParam.album.photoName[i],paramsBuff);
+                    sscanf(line, "%s %[^\n]", button->modeParam.album.photoName[i], paramsBuff);
+                    LOG("[Config][Page %d][Button %d] %s\n",
+                        i, j,
+                        (button->modeParam.album.photoName[i]));
                 }
+                break;
+            case 'b':
+                button->mode = Beep;
+                button->modeParam.beep.state = 0;
+                break;
+            case 'p':
+                button->mode = MusicPlay;
+                break;
+            case 's':
+                button->mode = MusicStop;
                 break;
             default:
                 button->mode = None;
