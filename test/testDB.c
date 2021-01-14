@@ -50,6 +50,17 @@ int ctrl_led(int led, char isOn)
     LOG("LED %d status: %d\n",led,isOn);
 }
 
+int lcd_test(){
+    while(1){
+        LOG("Show pic 1.\n");
+        sleep(3);
+        LOG("Show pic 2.\n");
+        sleep(3);
+        LOG("Show pic 3.\n");
+        sleep(3);
+    }
+}
+
 int main()
 {
     struct Controller *controller = ConfigLoad("config.txt");

@@ -77,12 +77,30 @@ void *keyStatusThread(void *param)
     }
 }
 
+void *LCDThread(void *param){
+    lcd_test();
+}
+
+void *AlbumThread(void *param){
+    struct Button* b = (struct Button*)param;
+    while(1){
+        lcd_show_bmp(b->modeParam.album.photoName[b->modeParam.album.currentPhoto]);
+        b->modeParam.album.currentPhoto = (b->modeParam.album.currentPhoto + 1)%b->modeParam.album.size;
+    }
+}
+
 int ButtonInitEvent(struct Controller *controller, struct Button *button)
 {
     switch (button->mode)
     {
     case KeyStatus:
         pthread_create(&button->modeParam.key.thread, NULL, keyStatusThread, button);
+        break;
+    case LCD:
+        pthread_create(&button->modeParam.lcd.thread, NULL ,LCDThread, button);
+        break;
+    case Album:
+        pthread_create(&button->modeParam.album.thread,NULL,AlbumThread,button);
         break;
     default:
 
@@ -97,6 +115,13 @@ int ButtonExitEvent(struct Controller *controller, struct Button *button)
     {
     case KeyStatus:
         button->modeParam.key.isStop=1;
+        pthread_join(&button->modeParam.key.thread, NULL);
+        break;
+    case LCD:
+        pthread_cancel(&button->modeParam.lcd.thread);
+        break;
+    case Album:
+        pthread_cancel(&button->modeParam.album.thread);
         break;
     default:
         break;
@@ -319,7 +344,15 @@ struct Controller *ConfigLoad(char *configFilePath)
                 break;
             case 'c':
                 button->mode = LCD;
-                button->modeParam.lcd.color = 0;
+                break;
+            case 'a':
+                button->mode = Album;
+                sscanf(paramsBuff, "%d", &button->modeParam.album.size);
+                button->modeParam.album.currentPhoto = 0;
+                for(int i=0;i<button->modeParam.album.size;i++){
+                    GET_LINE;
+                    sscanf(line, "%s %[^\n]", button->modeParam.album.photoName[i],paramsBuff);
+                }
                 break;
             default:
                 button->mode = None;

@@ -26,6 +26,7 @@ int lcd_show_bmp(char *bmp_name);
 int ctrl_led(int led, char isOn);
 // get 4 keys status
 int get_key(char *keyStatus);
+int lcd_test();
 
 struct Vector
 {
@@ -66,7 +67,8 @@ enum WorkMode
     Redirect, // r
     LED,      // l
     KeyStatus,// k
-    LCD       // c
+    LCD,      // c
+    Album     // a
 };
 
 struct WorkModeRedirect
@@ -88,7 +90,15 @@ struct WorkModeKeyStatus
 
 struct WorkModeLCD
 {
-    int color;
+    pthread_t thread;
+};
+
+struct WorkModeAlbum
+{
+    int currentPhoto;
+    int size;
+    char photoName[10][20];
+    pthread_t thread;
 };
 
 union WorkModeUnion
@@ -97,6 +107,7 @@ union WorkModeUnion
     struct WorkModeLED led;
     struct WorkModeKeyStatus key;
     struct WorkModeLCD lcd;
+    struct WorkModeAlbum album;
 };
 
 struct Button
